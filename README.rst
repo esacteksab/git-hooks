@@ -2,6 +2,21 @@ Let me break it down in pieces and explain the parts
 
 .. code-block:: bash
 
+    #!/bin/sh
+    if [ $(git diff HEAD@{1} HEAD --name-only | grep -E
+    'base-requirements|prod-requirements' -c) -ne 0 ]
+    then
+        $VIRTUAL_ENV/bin/pip install -Ur prod-requirements.txt
+    fi
+
+
+Essentially what the above is doing, is doing a git diff, `grep`'ing to see if
+my base-requirements or prod-requirements files changed, and if they did, doing
+a pip install prod-requirements (which includes base-requirements) to ensure
+that all my dependancies are met/installed.
+
+.. code-block:: bash
+
     ## if a settings file or a models file change, restart uWSGI
     if [ $(git diff HEAD@{1} HEAD --name-only | grep -E
     'conf/*.py|web_site/*/models.py' -c) -ne 0 ]
