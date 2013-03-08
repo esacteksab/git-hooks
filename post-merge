@@ -1,0 +1,25 @@
+#!/bin/bash
+
+## If base or prod requirements change, activate virtualenv and install new requirements
+if [ $(git diff HEAD@{1} HEAD --name-only | grep -E 'base-requirements|prod-requirements' -c) -ne 0 ]
+then
+        source venv/bin/activate && $VIRTUAL_ENV/bin/pip install -Ur prod-requirements.txt && $VIRTUAL_ENV/bin/deactivate
+fi
+
+## if a settings file or a models file change, restart uWSGI
+if [ $(git diff HEAD@{1} HEAD --name-only | grep -E 'conf/*.py|web_site/*/models.py' -c) -ne 0 ]
+then
+        source venv/bin/activate && fab restart_uwsgi
+fi
+
+## if a migration file exists, syncdb and migrate
+if [ $(git diff HEAD@{1} HEAD --name-only | grep -E 'web_site/*/migrations/*.py' -c) -ne 0 ]
+then
+        source venv/bin/activate && fab syncdb && fab migrate_all
+fi
+
+## if a file changed in web_site/ change owner to www-data:www-data
+if [ $(git diff HEAD@{1} HEAD --name-only | grep -E 'web_site/' -c) -ne 0 ]
+then
+        source venv/bin/activate && fab change_owner
+fi
